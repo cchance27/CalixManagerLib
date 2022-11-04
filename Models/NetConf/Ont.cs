@@ -1,4 +1,4 @@
-﻿namespace Calix;
+﻿namespace CalixManager.Models.NetConf;
 
 public class Ont
 {
@@ -8,7 +8,7 @@ public class Ont
     public string serno { get; set; } = "";
     public string subscriberid { get; set; } = "";
     public string descr { get; set; } = "";
-    public PonPort? pon { get; set; }
+    public PonLocation? pon { get; set; }
     public OntState? state { get; set; }
 }
 

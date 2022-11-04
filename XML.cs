@@ -1,46 +1,11 @@
-﻿namespace Calix;
+﻿using CalixManager.Models.NetConf;
 
-public static class CalixXML
+namespace CalixManager;
+
+public static class XMLMessages
 {
-    public struct MessageData
-    {
-        int id = 0;
-        int? session = null;
-
-        public int messageId {
-            get {
-                id++;
-                return id;
-            }
-        }
-
-        public int sessionId
-        {
-            get
-            {
-                ArgumentNullException.ThrowIfNull(session);
-                return session.Value;
-            }
-            set
-            {
-                if (value > -1) 
-                    session = value;
-            }
-        }
-
-        public string username = "rootgod";
-        public string password = "root";
-        public int timeout = 35000;
-
-        public MessageData(string username = "rootgod", string password = "root", int timeout = 35000)
-        {
-            this.username = username;
-            this.password = password;
-            this.timeout = timeout;
-        }
-    }
-
-    static string CalixEnvelope(string xmlInternal) => $"""
+        static string CalixEnvelope(string xmlInternal) => 
+        $"""
         <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
             {xmlInternal}
         </soapenv:Envelope>
@@ -124,7 +89,42 @@ public static class CalixXML
             </action>
             """);
 
+    public static string GetOntDetail(MessageData md, string node, string id) =>
+        CalixRpc(md, node,
+            $"""
+            <get>
+                <filter type="subtree">
+                    <top>
+                        <object>
+                            <type>Ont</type>
+                            <id>
+                                <ont>{id}</ont>
+                            </id>
+                        </object>
+                    </top>
+                </filter>
+            </get>
+            """);
 
+    public static string GetEthSvc(MessageData md, string node, int id, bool limited = false) =>
+        CalixRpc(md, node,
+            $"""
+            <get-config>
+                <source><running/></source>
+                <filter type="subtree">
+                    <top>
+                        <object>
+                        <type>Ont</type>
+                        <id><ont>{id}</ont></id>
+                        <children>
+                            <type>EthSvc</type>
+                            {(limited ? "<attr-list>admin descr tag-action bw-prof mcast-prof</attr-list>" : "")}
+                        </children>
+                        </object>
+                    </top>
+                </filter>
+            </get-config>
+            """);
 
     public static string ProvisionRGService(MessageData md, string node, int ontId) =>
         CalixRpc(md, node,
