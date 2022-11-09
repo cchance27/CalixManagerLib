@@ -3,7 +3,7 @@
 public class Ont
 {
     public int networkref { get; init; }
-    public string? addressid { get; init; }
+    public double addressid { get; init; }
     public int aidtype {get; init;}
     public int straid {get; init;}
     //"ex_pwe3prof_bytes": null,

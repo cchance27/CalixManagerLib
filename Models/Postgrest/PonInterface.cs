@@ -3,7 +3,7 @@
 public class PonInterface
 {
     public int networkref { get; init; }
-    public string? addressid { get; init; }
+    public double addressid { get; init; }
     public int aidtype { get; init; }
     public string? straid { get; init; }
     public string? card { get; init; }

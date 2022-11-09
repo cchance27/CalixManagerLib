@@ -89,6 +89,26 @@ public static class XMLMessages
             </action>
             """);
 
+    public static string GetOntProfile(MessageData md, string node, int model) =>
+        CalixRpc(md, node,
+            $"""
+            <get-config>
+                <source>
+                    <running/>
+                </source>
+                <filter type="subtree">
+                    <top>
+                        <object>
+                            <type>OntProf</type>
+                            <id>
+                                <ontprof>{model}</ontprof>
+                            </id>
+                        </object>
+                    </top>
+                </filter>
+            </get-config>
+            """);
+
     public static string GetOntDetail(MessageData md, string node, string id) =>
         CalixRpc(md, node,
             $"""
@@ -184,4 +204,71 @@ public static class XMLMessages
                </config>
             </edit-config>
         """);
+
+    public static string GetResGwState(MessageData md, string node, int ontId, int rg) =>
+        CalixRpc(md, node,
+            $"""
+            <get>
+                <filter type="subtree">
+                    <top>
+                        <object>
+                            <type>OntRg</type>
+                            <id>
+                                <ont>{ontId}</ont>
+                                <ontslot>8</ontslot>
+                                <ontrg>{rg}</ontrg>
+                            </id>
+                        </object>
+                    </top>
+                </filter>
+            </get>
+            """);
+
+    public static string GetAllOntEthSvcConfig(MessageData md, string node, int ontId) =>
+        CalixRpc(md, node,
+            $"""
+            <get-config>
+                <source>
+                    <running/>
+                </source>
+                <filter type="subtree">
+                    <top>
+                        <object>
+                            <type>Ont</type>
+                            <id>
+                                <ont>{ontId}</ont>
+                            </id>
+                            <children>
+                                <type>EthSvc</type>
+                                <attr-list>admin descr tag-action bw-prof out-tag in-tag mcast-prof pon-cos us-cir-override us-pir-override ds-pir-override</attr-list>
+                            </children>
+                         </object>
+                    </top>
+                </filter>
+            </get-config>
+            """);
+
+    public static string GetAllOntRgConfig(MessageData md, string node, int ontId) =>
+    CalixRpc(md, node,
+        $"""
+            <get-config>
+                <source>
+                    <running/>
+                </source>
+                <filter type="subtree">
+                    <top>
+                        <object>
+                            <type>Ont</type>
+                            <id>
+                                <ont>{ontId}</ont>
+                            </id>
+                            <children>
+                                <type>OntRg</type>
+                                <attr-list>admin pppoe-user pppoe-password wan-protocol static-ip static-ip-mask static-ip-gw pri-dns-server sec-dns-server set-remote-access-secs</attr-list>
+                            </children>
+                         </object>
+                    </top>
+                </filter>
+            </get-config>
+            """);
 }
