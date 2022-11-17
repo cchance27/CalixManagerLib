@@ -4,6 +4,7 @@ using CalixManager.Models;
 using CalixManager.Models.NetConf;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Xml.Linq;
@@ -304,7 +305,7 @@ public class Session
     /// <summary>
     /// Array of 
     /// </summary>
-    /// <param name="token"></param>
+    /// <param name="token">Cancellation Token can be pased down otherwise will default</param>
     /// <returns>Array of Bandwidth Profiles (CalixManager.Models.Postgrest.GlobalBwProfile[])</returns>
     public async Task<Models.Postgrest.GlobalBwProfile[]?> GetAllGlobalBwProfilesAsync(CancellationToken token = default) =>
         await httpClient.GetFromJsonAsync<Models.Postgrest.GlobalBwProfile[]>(postgrest + "globalexontethbwprofile", token);
@@ -312,24 +313,35 @@ public class Session
     /// <summary>
     /// Get All CMS Network Inventory (OLT/DSLAM etc)
     /// </summary>
-    /// <param name="token"></param>
-    /// <returns>Array of InventoryDevices (CalixManager.Models.Postgrest.InventoryDevice[])</returns>
+    /// <param name="token">Cancellation Token can be pased down otherwise will default</param>
+    /// <returns>Array of InventoryDevices (CalixManager.Models.Postgrest.Shelf[])</returns>
     public async Task<Models.Postgrest.Shelf[]?> GetAllShelvesAsync(CancellationToken token = default) =>
         await httpClient.GetFromJsonAsync<Models.Postgrest.Shelf[]>(postgrest + "baseinventorynetwork", token);
 
     /// <summary>
     /// Get All PonPorts from all OLTs
     /// </summary>
-    /// <param name="token"></param>
+    /// <param name="token">Cancellation Token can be pased down otherwise will default</param>
+    /// <param name="filter">Support for postgress filters, pass via an array of strings[] { "value=eq.1", "value2=lt.2" }</param>
     /// <returns>Array of OltPonPorts (CalixManager.Models.Postgrest.PonInterface[]</returns>
-    public async Task<Models.Postgrest.PonInterface[]?> GetAllPonInterfacesAsync(CancellationToken token = default) =>
-        await httpClient.GetFromJsonAsync<Models.Postgrest.PonInterface[]>(postgrest + "ex_pon", token);
+    public async Task<Models.Postgrest.PonInterface[]?> GetAllPonInterfacesAsync(CancellationToken token = default, string[]? filter = null) =>
+        await httpClient.GetFromJsonAsync<Models.Postgrest.PonInterface[]>(postgrest + "ex_pon" + (filter is not null ? $"?{string.Join("&", filter)}" : ""), token);
 
     /// <summary>
     /// Get All Onts from All OLTs (based on CMS Database last poll, not a live polling of ONT)
     /// </summary>
-    /// <param name="token"></param>
-    /// <returns>Array of OntStatus (CalixManager.Models.Postgrest.OntState[]</returns>
-    public async Task<Models.Postgrest.Ont[]?> GetAllOntsAsync(CancellationToken token = default) =>
-        await httpClient.GetFromJsonAsync<Models.Postgrest.Ont[]>(postgrest + "ex_ont", token);
+    /// <param name="token">Cancellation Token can be pased down otherwise will default</param>
+    /// <param name="filter">Support for postgress filters, pass via an array of strings[] { "value=eq.1", "value2=lt.2" }</param>
+    /// <returns>Array of OntStatus (CalixManager.Models.Postgrest.Ont[]</returns>
+    public async Task<Models.Postgrest.Ont[]?> GetAllOntsAsync(CancellationToken token = default, string[]? filter = null) =>
+        await httpClient.GetFromJsonAsync<Models.Postgrest.Ont[]>(postgrest + "ex_ont" + (filter is not null ? $"?{string.Join("&", filter)}" : ""), token);
+
+    /// <summary>
+    /// Get All Alarms from All OLTs (based on CMS Database last poll, not a live polling of ONT)
+    /// </summary>
+    /// <param name="token">Cancellation Token can be pased down otherwise will default</param>
+    /// <param name="filter">Support for postgress filters, pass via an array of strings[] { "value=eq.1", "value2=lt.2" }</param>
+    /// <returns>Array of OntStatus (CalixManager.Models.Postgrest.EMSAlarmLogEntry[]</returns>
+    public async Task<Models.Postgrest.EMSAlarmLogEntry[]?> GetAllAlarmsAsync(CancellationToken token = default, string[]? filter = null) =>
+        await httpClient.GetFromJsonAsync<Models.Postgrest.EMSAlarmLogEntry[]>(postgrest + "emsalarmlog" + (filter is not null ? $"?{string.Join("&", filter)}" : ""), token);
 }
