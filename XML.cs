@@ -271,4 +271,27 @@ public static class XMLMessages
                 </filter>
             </get-config>
             """);
+
+        public static string SetRemoteAccessTime(MessageData md, string node, int ontId, int slot, int rg, int seconds) =>
+        CalixRpc(md, node,
+            $"""
+            <edit-config>
+                <target>
+                    <running/>
+                </target>
+                <config>
+                    <top>
+                        <object operation="merge">
+                            <type>OntRg</type>
+                            <id>
+                                <ont>{ontId}</ont>
+                                <ontslot>{slot}</ontslot>
+                                <ontrg>{rg}</ontrg>
+                            </id>
+                            <set-remote-access-secs>{seconds}</set-remote-access-secs>
+                        </object>
+                    </top>
+                </config>
+            </edit-config>
+            """);
 }

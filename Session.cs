@@ -87,6 +87,23 @@ public class Session
         throw new Exception("Unrecognized ONT Profile Model");
     }
 
+    public async Task<bool> SetRemoteAccessAsync(string node, int ontId, int slot, int rg, int seconds, CancellationToken token = default)
+    {
+        node = node.ToUpper();
+
+        if (!node.StartsWith("NTWK-"))
+            node = "NTWK-" + node;
+
+        var xdoc = await PostAsync(XMLMessages.SetRemoteAccessTime(messageData, node, ontId, slot, rg, seconds), token);
+
+        var config = xdoc.Descendants().Where(v => v.Name.LocalName == "ok").FirstOrDefault();
+
+        if (config is not null && config.HasElements)
+            return true;
+
+        return false;
+    }
+
 
     public async Task<Models.NetConf.EthSvcConfig[]?> GetEthSvcsAsync(string node, int ontId, CancellationToken token = default)
     {
