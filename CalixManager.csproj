@@ -4,8 +4,8 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.0.6</Version>
-    <Description>Added enable of remote access</Description>
+    <Version>0.0.7</Version>
+    <Description>ResGw subscrid and descr + minor fixes</Description>
   </PropertyGroup>
 
   <ItemGroup>
