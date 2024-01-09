@@ -9,7 +9,7 @@ namespace CalixManager.Models.Postgrest
     public class EMSAlarmLogEntry
     {
         public uint u_id { get; init; }
-        public string sid { get; init; }
+        public string? sid { get; init; }
         public uint nodeshelfid { get; init; }
         public uint logseqnum { get; init; }
         public string? facility { get; init; }
