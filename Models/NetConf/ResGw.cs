@@ -12,6 +12,8 @@ namespace CalixManager.Models.NetConf
         public int slot { get; set; }
         public int port { get; set; }
         public bool active { get; set; }
+        public string? subscriberId { get; set; }
+        public string? descr { get; set; }
         public string? remoteAccessTime { get; set; }
         public int memberCount { get; set; }
         public Member[]? members {get; set;}
