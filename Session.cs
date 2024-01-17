@@ -197,7 +197,7 @@ public class Session
         return null;
     }
 
-    public async Task<Models.NetConf.GponPortConfig?> GetGponPortConfig(string node, int shelf, int card, int port, CancellationToken token = default)
+    public async Task<Models.NetConf.GponPortConfig?> GetGponPortConfigAsync(string node, int shelf, int card, int port, CancellationToken token = default)
     {
         node = node.ToUpper();
 
@@ -215,13 +215,50 @@ public class Session
                 shelf = Int32.Parse(c.Element("id")?.Element("shelf")?.Value ?? "0"),
                 card = Int32.Parse(c.Element("id")?.Element("card")?.Value ?? "0"),
                 port = Int32.Parse(c.Element("id")?.Element("gponport")?.Value ?? "0"),
-                rateLimit = Int32.Parse(c.Element("id")?.Element("rate-limit")?.Value ?? "0"),
-                descr = c.Element("id")?.Element("descr")?.Value ?? """Unknown"""
+                rateLimit = Int32.Parse(c.Element("rate-limit")?.Value ?? "0"),
+                descr = c.Element("descr")?.Value ?? """Unknown"""
             };
         }
 
         return null;
     }
+
+
+
+    public async Task<Models.NetConf.GponPortState?> GetGponPortStateAsync(string node, int shelf, int card, int port, CancellationToken token = default)
+    {
+        node = node.ToUpper();
+
+        if (!node.StartsWith("NTWK-"))
+            node = "NTWK-" + node;
+
+        var xdoc = await PostAsync(XMLMessages.GetGponPortState(messageData, node, shelf, card, port), token) ;
+        var c = xdoc.Descendants().Where(v => v.Name.LocalName == "object").FirstOrDefault();
+
+        if (c is not null && c.HasElements)
+        {
+            return new Models.NetConf.GponPortState
+            {
+                opStat = c.Element("op-stat")?.Value == "enabled",
+                shelf = Int32.Parse(c.Element("id")?.Element("shelf")?.Value ?? "0"),
+                card = Int32.Parse(c.Element("id")?.Element("card")?.Value ?? "0"),
+                port = Int32.Parse(c.Element("id")?.Element("gponport")?.Value ?? "0"),
+                status = c.Element("status")?.Value ?? "unknown",
+                sfpStatus = c.Element("sfp-status")?.Value ?? "unknown",
+                sfpConn = c.Element("sfp-conn")?.Value ?? "unknown",
+                sfpTemp = float.Parse(c.Element("sfp-temp")?.Value ?? "0"),
+                sfpLineLength = float.Parse(c.Element("sfp-line-length")?.Value ?? "0"),
+                sfpWavelength = float.Parse(c.Element("sfp-wavelength")?.Value ?? "0"),
+                sfpTxPower = float.Parse(c.Element("sfp-tx-power")?.Value ?? "0"),
+                sfpRxPower = float.Parse(c.Element("sfp-rx-power")?.Value ?? "0"),
+                sfpTxBias = float.Parse(c.Element("sfp-tx-bias")?.Value ?? "0"),
+                sfpVoltage = float.Parse(c.Element("sfp-voltage")?.Value ?? "0"),
+            };
+        }
+
+        return null;
+    }
+
 
     public async Task<Models.NetConf.ResGwConfig[]?> GetResGwConfigsAsync(string node, int ontId, CancellationToken token = default, bool withoutPasswords = true)
     {

@@ -344,7 +344,7 @@ public static class XMLMessages
                 </get-config>    
             """);
         
-        public static string GetGponPortStatus(MessageData md, string node, int shelf, int card, int port) => 
+        public static string GetGponPortState(MessageData md, string node, int shelf, int card, int port) => 
         CalixRpc(md, node, 
             $"""
             <get>
