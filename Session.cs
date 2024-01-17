@@ -5,6 +5,7 @@ using CalixManager.Models.NetConf;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Xml.Linq;
@@ -105,6 +106,69 @@ public class Session
     }
 
 
+    public async Task<bool> SetOntDetailsAsync(string node, int ontId, string descr, string subscriberId, CancellationToken token = default)
+    {
+        node = node.ToUpper();
+
+        if (!node.StartsWith("NTWK-"))
+            node = "NTWK-" + node;
+
+        var xdoc = await PostAsync(XMLMessages.SetONTOwnerDetails(messageData, node, ontId, descr, subscriberId), token);
+
+        var ok = xdoc.Descendants().Any(v => v.Name.LocalName == "ok");
+        if (ok)
+            return true;
+
+        return false;
+    }
+
+
+    public async Task<bool> SetRgPPPoEAsync(string node, int ontId, int slot, int rg, string pppUser, string pppPass, CancellationToken token = default)
+    {
+        node = node.ToUpper();
+
+        // No blank usernames or passwords
+        if (String.IsNullOrWhiteSpace(pppUser) || String.IsNullOrWhiteSpace(pppPass))
+            return false;
+
+        if (!node.StartsWith("NTWK-"))
+            node = "NTWK-" + node;
+
+        var msg = XMLMessages.SetOntRG(messageData, node, ontId, slot, rg, "pppoe", pppUser, pppPass, "0.0.0.0","0.0.0.0","0.0.0.0","0.0.0.0","0.0.0.0");
+        logger.LogInformation($"Generated NETConf Message: \n{msg}");
+
+        var xdoc = await PostAsync(msg, token);
+
+        var ok = xdoc.Descendants().Any(v => v.Name.LocalName == "ok");
+        if (ok) {
+            logger.LogInformation($"Response: \n{xdoc}");
+            return true;
+        } else {
+            logger.LogWarning($"Failed NetCONF Response: \n{xdoc}");
+        }
+        return false;
+    }
+
+    public async Task<bool> SetRgStaticIpAsync(string node, int ontId, int slot, int rg, IPAddress ip, IPAddress gw, IPAddress mask, IPAddress dns1, IPAddress dns2, CancellationToken token = default)
+    {
+        node = node.ToUpper();
+
+        if (!node.StartsWith("NTWK-"))
+            node = "NTWK-" + node;
+
+        var msg = XMLMessages.SetOntRG(messageData, node, ontId, slot, rg, "static", "", "", ip.ToString(), mask.ToString(), gw.ToString(), dns1.ToString(), dns2.ToString());
+        var xdoc = await PostAsync(msg, token);
+        
+        var ok = xdoc.Descendants().Any(v => v.Name.LocalName == "ok");
+        if (ok) {
+            logger.LogInformation($"Response: \n{xdoc}");
+            return true;
+        } else {
+            logger.LogWarning($"Failed NetCONF Response: \n{xdoc}");
+        }
+        return false;
+    }
+
     public async Task<Models.NetConf.EthSvcConfig[]?> GetEthSvcsAsync(string node, int ontId, CancellationToken token = default)
     {
         node = node.ToUpper();
@@ -133,7 +197,33 @@ public class Session
         return null;
     }
 
-    public async Task<Models.NetConf.ResGwConfig[]?> GetResGwConfigsAsync(string node, int ontId, CancellationToken token = default)
+    public async Task<Models.NetConf.GponPortConfig?> GetGponPortConfig(string node, int shelf, int card, int port, CancellationToken token = default)
+    {
+        node = node.ToUpper();
+
+        if (!node.StartsWith("NTWK-"))
+            node = "NTWK-" + node;
+
+        var xdoc = await PostAsync(XMLMessages.GetGponPortConfig(messageData, node, shelf, card, port), token) ;
+        var c = xdoc.Descendants().Where(v => v.Name.LocalName == "object").FirstOrDefault();
+
+        if (c is not null && c.HasElements)
+        {
+            return new Models.NetConf.GponPortConfig
+            {
+                enabled = c.Element("admin")?.Value == "enabled",
+                shelf = Int32.Parse(c.Element("id")?.Element("shelf")?.Value ?? "0"),
+                card = Int32.Parse(c.Element("id")?.Element("card")?.Value ?? "0"),
+                port = Int32.Parse(c.Element("id")?.Element("gponport")?.Value ?? "0"),
+                rateLimit = Int32.Parse(c.Element("id")?.Element("rate-limit")?.Value ?? "0"),
+                descr = c.Element("id")?.Element("descr")?.Value ?? """Unknown"""
+            };
+        }
+
+        return null;
+    }
+
+    public async Task<Models.NetConf.ResGwConfig[]?> GetResGwConfigsAsync(string node, int ontId, CancellationToken token = default, bool withoutPasswords = true)
     {
         node = node.ToUpper();
 
@@ -152,7 +242,7 @@ public class Session
                 enabled = c.Element("admin")?.Value == "enabled",
                 wanProtocol = c.Element("wan-protocol")?.Value,
                 pppoeUser = c.Element("pppoe-user")?.Value,
-                //pppoePassword = c.Element("pppoe-password")?.Value, // Commented out not sure we want to expose this.
+                pppoePassword = withoutPasswords ? "" : c.Element("pppoe-password")?.Value,
                 staticIp = c.Element("static-ip")?.Value,
                 staticIpMask = c.Element("static-ip-mask")?.Value,
                 staticIpGw = c.Element("static-ip-gw")?.Value,
@@ -215,6 +305,8 @@ public class Session
                 port = Int32.Parse(config.Element("id")?.Element("ontrg")?.Value ?? "0"),
                 slot = Int32.Parse(config.Element("id")?.Element("ontslot")?.Value ?? "0"),
                 active = config.Element("op-stat")?.Value == "enable",
+                descr = config.Element("descr")?.Value ?? "",
+                subscriberId = config.Element("subscr-id")?.Value ?? "",
                 remoteAccessTime = config.Element("remote-access-time")?.Value ?? "disabled",
                 memberCount = Int32.Parse(config.Element("mbr-count")?.Value ?? "0"),
                 members = allMembers,
@@ -226,7 +318,7 @@ public class Session
         return null;
     }
 
-    public async Task<Models.NetConf.Ont> GetOntAsync(string node, string serial, CancellationToken token = default)
+    public async Task<Models.NetConf.Ont> GetOntAsync(string node, string serial, CancellationToken token = default, bool withoutPasswords = true)
     {
         node = node.ToUpper();
 
@@ -282,7 +374,7 @@ public class Session
 
         ont.resGateways = await GetAllOntResGws(node, ont.id, ont.ontprof, token);
         ont.ethSvcConfig = await GetEthSvcsAsync(node, ont.id, token);
-        ont.resGatewayConfig = await GetResGwConfigsAsync(node, ont.id, token);
+        ont.resGatewayConfig = await GetResGwConfigsAsync(node, ont.id, token, withoutPasswords);
 
         return ont;
     }

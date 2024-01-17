@@ -180,7 +180,7 @@ public static class XMLMessages
             </edit-config>
             """);
 
-    public static string SetRGToPPPoE(MessageData md, string node, int ontId, string pppUser, string pppPass) => 
+    public static string SetOntRG(MessageData md, string node, int ontId, int ontSlot, int ontRg, string wantype, string pppUser, string pppPass, string staticip, string staticmask, string staticgw, string staticdns, string staticdns2, bool enabled = true) => 
         CalixRpc(md, node,
             $"""
             <edit-config>
@@ -191,14 +191,21 @@ public static class XMLMessages
                            <type>OntRg</type>
                            <id>
                                <ont>{ontId}</ont>
-                               <ontslot>8</ontslot>
-                               <ontrg>1</ontrg>
+                               <ontslot>{ontSlot}</ontslot>
+                               <ontrg>{ontRg}</ontrg>
                            </id>
-                           <admin>enabled</admin>
+                           <descr></descr>
+                           <subscr-id></subscr-id>
+                           <admin>{(enabled ? "enabled" : "disabled")}</admin>
                            <mgmt-mode>native</mgmt-mode>
-                           <wan-protocol>pppoe</wan-protocol>
+                           <wan-protocol>{wantype}</wan-protocol>
                            <pppoe-user>{pppUser}</pppoe-user>
                            <pppoe-password>{pppPass}</pppoe-password>
+                           <static-ip>{staticip}</static-ip>
+                           <static-ip-mask>{staticmask}</static-ip-mask>
+                           <static-ip-gw>{staticgw}</static-ip-gw>
+                           <pri-dns-server>{staticdns}</pri-dns-server>
+                           <sec-dns-server>{staticdns2}</sec-dns-server>
                        </object>
                    </top>
                </config>
@@ -294,4 +301,67 @@ public static class XMLMessages
                 </config>
             </edit-config>
             """);
+
+        public static string SetONTOwnerDetails(MessageData md, string node, int ontId, string descr, string subscrid) =>
+        CalixRpc(md, node,
+            $"""
+            <edit-config>
+                <target>
+                    <running/>
+                </target>
+                <config>
+                    <top>
+                        <object operation="merge">
+                            <type>Ont</type>
+                            <id>
+                                <ont>{ontId}</ont>
+                            </id>
+                            <descr>{descr}</descr>
+                            <subscr-id>{subscrid}</subscr-id>
+                        </object>
+                    </top>
+                </config>
+            </edit-config>
+            """);
+
+        public static string GetGponPortConfig(MessageData md, string node, int shelf, int card, int port) => 
+        CalixRpc(md, node, 
+            $"""
+            <get-config>
+                    <source><running/></source>
+                    <filter type="subtree">
+                        <top>
+                            <object>
+                                <type>GponPort</type>
+                                <id>
+                                    <shelf>{shelf}</shelf>
+                                    <card>{card}</card>
+                                    <gponport>{port}</gponport>
+                                </id>
+                            </object>
+                        </top>
+                    </filter>
+                </get-config>    
+            """);
+        
+        public static string GetGponPortStatus(MessageData md, string node, int shelf, int card, int port) => 
+        CalixRpc(md, node, 
+            $"""
+            <get>
+                <filter type="subtree">
+                     <top>
+                         <object>
+                            <type>GponPort</type>
+                            <id>
+                                <shelf>{shelf}</shelf>
+                                <card>{card}</card>
+                                <gponport>{port}</gponport>
+                            </id>
+                            <attr-list>op-stat status sfp-status sfp-type sfp-conn  sfp-temp sfp-tx-bias sfp-tx-power sfp-rx-power sfp-voltage sfp-line-length sfp-wavelength clei</attr-list>
+                        </object>
+                    </top>
+                </filter>
+            </get> 
+            """);
+        
 }
