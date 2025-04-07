@@ -97,12 +97,9 @@ public class Session
 
         var xdoc = await PostAsync(XMLMessages.SetRemoteAccessTime(messageData, node, ontId, slot, rg, seconds), token);
 
-        var config = xdoc.Descendants().Where(v => v.Name.LocalName == "ok").FirstOrDefault();
-
-        if (config is not null && config.HasElements)
-            return true;
-
-        return false;
+        var ok = xdoc.Descendants().Any(v => v.Name.LocalName == "ok");
+        
+        return ok;
     }
 
 
@@ -116,10 +113,8 @@ public class Session
         var xdoc = await PostAsync(XMLMessages.SetONTOwnerDetails(messageData, node, ontId, descr, subscriberId), token);
 
         var ok = xdoc.Descendants().Any(v => v.Name.LocalName == "ok");
-        if (ok)
-            return true;
-
-        return false;
+        
+        return ok;
     }
 
 
@@ -141,7 +136,7 @@ public class Session
 
         var ok = xdoc.Descendants().Any(v => v.Name.LocalName == "ok");
         if (ok) {
-            logger.LogInformation($"Response: \n{xdoc}");
+            logger.LogDebug($"Response: \n{xdoc}");
             return true;
         } else {
             logger.LogWarning($"Failed NetCONF Response: \n{xdoc}");
@@ -161,7 +156,7 @@ public class Session
         
         var ok = xdoc.Descendants().Any(v => v.Name.LocalName == "ok");
         if (ok) {
-            logger.LogInformation($"Response: \n{xdoc}");
+            logger.LogDebug($"Response: \n{xdoc}");
             return true;
         } else {
             logger.LogWarning($"Failed NetCONF Response: \n{xdoc}");
